@@ -4,7 +4,8 @@ from scipy import misc
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-
+import argparse
+import imutils
 
 
 ######## Function ##########
@@ -45,7 +46,7 @@ def computePositionObject(img, obj):
 
 
 def computeBodyBinary(img):
-    blur = cv2.GaussianBlur(img,(51,51),0)
+    blur = cv2.GaussianBlur(img,(5,5),0)
     
     edges = cv2.Canny(blur,1,20)
     
@@ -53,28 +54,38 @@ def computeBodyBinary(img):
     (thresh, blackAndWhiteImage) = cv2.threshold(edges, 0, 255, cv2.THRESH_BINARY)
     
     kernel = np.ones((5,5), np.uint8) 
-    img_dilation = cv2.dilate(blackAndWhiteImage, kernel, iterations=25) 
-    img_erode = cv2.erode(img_dilation, kernel, iterations=25);
     
-    return cv2.cvtColor(img_erode,cv2.COLOR_GRAY2RGB)
+    closed_img = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_CLOSE, kernel, iterations=5)
+    #img_dilation = cv2.dilate(blackAndWhiteImage, kernel, iterations=25) 
+    #img_erode = cv2.erode(img_dilation, kernel, iterations=25)
+    
+    return cv2.cvtColor(closed_img,cv2.COLOR_GRAY2RGB)
 
 
 
 ######### MAIN ############
-    
-img = cv2.imread("data/image4.jpeg", 1)
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--image", required=True, help="path to the input image")
+args = vars(ap.parse_args())
+
+
+img = cv2.imread(args["image"])
+img = imutils.resize(img, width=512)
 obj = cv2.imread("data/boule.png", 1)
-   
-body = computeBodyBinary(img)
+
+cv2.imshow("image", img)
+
+#body = computeBodyBinary(img)
 centers = computePositionObject(img, obj)
 
 for i in range(0, len(centers)):
-    cv2.circle(body,(int(centers[i][0]),int(centers[i][1])), 50, (255,0,0), -1)
+    cv2.circle(img,(int(centers[i][0]),int(centers[i][1])), 5, (255,0,0), -1)
   
-body = misc.imresize(body, 0.2);
-cv2.imshow("image", body)
+
+#cv2.imshow("body", body)
+cv2.imshow("image", img)
 cv2.waitKey(0)
-cv2.destroyWindow('image')
 
 
 
