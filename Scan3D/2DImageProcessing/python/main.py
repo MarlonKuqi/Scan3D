@@ -46,7 +46,7 @@ def computePositionObject(img, obj):
 
 
 def computeBodyBinary(img):
-    blur = cv2.GaussianBlur(img,(5,5),0)
+    blur = cv2.GaussianBlur(img,(21,21),0)
     
     edges = cv2.Canny(blur,1,20)
     
@@ -55,11 +55,43 @@ def computeBodyBinary(img):
     
     kernel = np.ones((5,5), np.uint8) 
     
-    closed_img = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_CLOSE, kernel, iterations=5)
+    closed_img = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_CLOSE, kernel, iterations=20)
     #img_dilation = cv2.dilate(blackAndWhiteImage, kernel, iterations=25) 
     #img_erode = cv2.erode(img_dilation, kernel, iterations=25)
     
     return cv2.cvtColor(closed_img,cv2.COLOR_GRAY2RGB)
+
+
+def computeLinks(centers, body, img): 
+    for i in range(0, len(centers)):
+        for j in range(0, len(centers)):
+            if i != j :
+                xDiff = centers[j][0] - centers[i][0];
+                yDiff = centers[j][1] - centers[i][1];
+                
+                xStep = xDiff/100;
+                yStep = yDiff/100;
+                
+                compt = 0;
+                transitivity = [];
+                
+                centerColor = tuple(body[int(centers[i][1]), int(centers[i][0])])
+                
+                for k in range(1,100):
+                    pixel = [0] * 2;
+                    pixel[0] = centers[i][0] + xStep * k; 
+                    pixel[1] = centers[i][1] + yStep * k; 
+                    
+                    if tuple(body[int(pixel[1]), int(pixel[0])]) != (0,0,0):
+                        compt = compt + 1;
+                    if tuple(body[int(pixel[1]), int(pixel[0])]) != (0,0,0) and tuple(body[int(pixel[1]), int(pixel[0])]) != (255,255,255) and tuple(body[int(pixel[1]), int(pixel[0])]) != centerColor:
+                        if(tuple(body[int(pixel[1]), int(pixel[0])]) not in transitivity):
+                            transitivity.append(tuple(body[int(pixel[1]), int(pixel[0])]));
+                
+                
+                if compt > 70 and len(transitivity) < 2:
+                    cv2.line(img, (int(centers[i][0]),int(centers[i][1])) , (int(centers[j][0]),int(centers[j][1])), (0, 255, 0), thickness=3, lineType=8)
+                    cv2.circle(img,(int(centers[i][0]),int(centers[i][1])), 20, (0,0,255), -1)
 
 
 
@@ -71,18 +103,21 @@ args = vars(ap.parse_args())
 
 
 img = cv2.imread(args["image"])
-img = imutils.resize(img, width=512)
+img = imutils.resize(img, width=1024)
 obj = cv2.imread("data/boule.png", 1)
 
 cv2.imshow("image", img)
 
-#body = computeBodyBinary(img)
+body = computeBodyBinary(img)
 centers = computePositionObject(img, obj)
 
 for i in range(0, len(centers)):
-    cv2.circle(img,(int(centers[i][0]),int(centers[i][1])), 5, (255,0,0), -1)
+    cv2.circle(body,(int(centers[i][0]),int(centers[i][1])), 40, (int(255/(i+1)),0,0), -1)
   
+    
+computeLinks(centers, body, img);
 
+img = imutils.resize(img, width=512)
 #cv2.imshow("body", body)
 cv2.imshow("image", img)
 cv2.waitKey(0)
