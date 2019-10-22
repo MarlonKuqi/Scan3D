@@ -25,14 +25,21 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     QObject::connect(ui->openFile, SIGNAL(triggered()), this, SLOT(ouvrirDialogue()));
+    QObject::connect(ui->launchTreatment, SIGNAL(clicked()), this, SLOT(displayResultingImage()));
 }
 
 void MainWindow::ouvrirDialogue(){
-    QString m_FichierImage = QFileDialog::getOpenFileName(this, "Ouvrir un fichier", QDir::homePath()+"/Images", "Images (*.png *.gif *.jpg *.jpeg)");
-    QMessageBox::information(this, "Fichier", "Vous avez sélectionné :\n" + m_FichierImage);
-    ui->label->setPixmap(QPixmap(m_FichierImage));
+    QString nomImage = QFileDialog::getOpenFileName(this, "Ouvrir un fichier", QDir::homePath()+"/Images", "Images (*.png *.gif *.jpg *.jpeg)");
+    QMessageBox::information(this, "Fichier", "Vous avez sélectionné :\n" + nomImage);
+    imageLoaded = QPixmap(nomImage);
+    ui->label->setPixmap(imageLoaded);
     ui->label->show();
-    qDebug() << m_FichierImage;
+    qDebug() << nomImage;
+}
+
+void MainWindow::displayResultingImage(){
+        ui->labelResult->setPixmap(imageLoaded);
+        ui->labelResult->show();
 }
 
 MainWindow::~MainWindow()
