@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->progressBar->hide();
     QObject::connect(ui->openFile, SIGNAL(triggered()), this, SLOT(ouvrirDialogue()));
     QObject::connect(ui->launchTreatment, SIGNAL(clicked()), this, SLOT(displayResultingImage()));
 }
@@ -33,13 +34,15 @@ void MainWindow::ouvrirDialogue(){
     QMessageBox::information(this, "Fichier", "Vous avez sélectionné :\n" + nomImage);
     imageLoaded = QPixmap(nomImage);
     ui->label->setPixmap(imageLoaded);
+    ui->label->setScaledContents(true);
     ui->label->show();
     qDebug() << nomImage;
 }
 
 void MainWindow::displayResultingImage(){
-        ui->labelResult->setPixmap(imageLoaded);
-        ui->labelResult->show();
+    ui->labelResult->setPixmap(imageLoaded);
+    ui->labelResult->setScaledContents(true);
+    ui->labelResult->show();
 }
 
 MainWindow::~MainWindow()
