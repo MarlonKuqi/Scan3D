@@ -11,11 +11,6 @@
    </rect>
   </property>
   <property name="windowTitle">
-<<<<<<< HEAD
-   <string>MainWindow</string>
-  </property>
-  <widget class="QWidget" name="centralWidget"/>
-=======
    <string>Scan3D</string>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -37,26 +32,11 @@ p, li { white-space: pre-wrap; }
     </property>
    </widget>
   </widget>
->>>>>>> 62948996c5c50f0ed6663895e094049530ff1245
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-<<<<<<< HEAD
-     <width>400</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuOuvrir">
-    <property name="title">
-     <string>Fichier</string>
-    </property>
-    <addaction name="separator"/>
-    <addaction name="actionOuvrir_un_fichier"/>
-   </widget>
-   <addaction name="menuOuvrir"/>
-=======
      <width>828</width>
      <height>21</height>
     </rect>
@@ -68,7 +48,6 @@ p, li { white-space: pre-wrap; }
     <addaction name="openFile"/>
    </widget>
    <addaction name="menuFichier"/>
->>>>>>> 62948996c5c50f0ed6663895e094049530ff1245
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -79,11 +58,7 @@ p, li { white-space: pre-wrap; }
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-<<<<<<< HEAD
-  <action name="actionOuvrir_un_fichier">
-=======
   <action name="openFile">
->>>>>>> 62948996c5c50f0ed6663895e094049530ff1245
    <property name="text">
     <string>Ouvrir un fichier...</string>
    </property>
@@ -91,22 +66,5 @@ p, li { white-space: pre-wrap; }
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
- <connections>
-  <connection>
-   <sender>actionOuvrir_un_fichier</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>199</x>
-     <y>149</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
