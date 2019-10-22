@@ -5,13 +5,17 @@
 
 #include <QAction>
 #include <QDebug>
+#include <QDesktopWidget>
 #include <QDir>
+#include <QLabel>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QString>
+#include <QStyle>
+#include <QTimer>
 #include <QToolBar>
 
-
+#include <QPixmap>
 #include "stdlib.h"
 
 
@@ -20,16 +24,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    QObject::connect(ui->openFile, SIGNAL(clicked()), this, SLOT(ouvrirDialogue()));
+    QObject::connect(ui->openFile, SIGNAL(triggered()), this, SLOT(ouvrirDialogue()));
 }
 
 void MainWindow::ouvrirDialogue(){
-    QString fichier = QFileDialog::getOpenFileName(this, "Ouvrir un fichier", QDir::homePath()+"/Images", "Images (*.png *.gif *.jpg *.jpeg)");
-    QMessageBox::information(this, "Fichier", "Vous avez sélectionné :\n" + fichier);
-
-    qDebug() << fichier;
+    QString m_FichierImage = QFileDialog::getOpenFileName(this, "Ouvrir un fichier", QDir::homePath()+"/Images", "Images (*.png *.gif *.jpg *.jpeg)");
+    QMessageBox::information(this, "Fichier", "Vous avez sélectionné :\n" + m_FichierImage);
+    ui->label->setPixmap(QPixmap(m_FichierImage));
+    ui->label->show();
+    qDebug() << m_FichierImage;
 }
-
 
 MainWindow::~MainWindow()
 {

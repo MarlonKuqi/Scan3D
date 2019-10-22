@@ -13,9 +13,9 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    void ouvrirDialogue();
     ~MainWindow();
-
+public slots:
+    void ouvrirDialogue();
 private:
     Ui::MainWindow *ui;
 
