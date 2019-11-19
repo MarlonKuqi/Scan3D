@@ -63,21 +63,22 @@ def computeBodyBinary(img):
 
 
 def computeLinks(centers, body, img): 
+    steps = 100
     for i in range(0, len(centers)):
         for j in range(0, len(centers)):
             if i != j :
                 xDiff = centers[j][0] - centers[i][0];
                 yDiff = centers[j][1] - centers[i][1];
                 
-                xStep = xDiff/100;
-                yStep = yDiff/100;
+                xStep = xDiff/steps;
+                yStep = yDiff/steps;
                 
                 compt = 0;
                 transitivity = [];
                 
                 centerColor = tuple(body[int(centers[i][1]), int(centers[i][0])])
                 
-                for k in range(1,100):
+                for k in range(1,steps):
                     pixel = [0] * 2;
                     pixel[0] = centers[i][0] + xStep * k; 
                     pixel[1] = centers[i][1] + yStep * k; 
@@ -89,7 +90,7 @@ def computeLinks(centers, body, img):
                             transitivity.append(tuple(body[int(pixel[1]), int(pixel[0])]));
                 
                 
-                if compt > 70 and len(transitivity) < 2:
+                if compt > 0.7 * steps and len(transitivity) < 2:
                     cv2.line(img, (int(centers[i][0]),int(centers[i][1])) , (int(centers[j][0]),int(centers[j][1])), (0, 255, 0), thickness=3, lineType=8)
                     cv2.circle(img,(int(centers[i][0]),int(centers[i][1])), 20, (0,0,255), -1)
 
@@ -103,12 +104,19 @@ args = vars(ap.parse_args())
 
 
 img = cv2.imread(args["image"])
+old_size = float(img.shape[0])
 img = imutils.resize(img, width=1024)
-obj = cv2.imread("data/boule.png", 1)
+ratio = float(img.shape[0]) / old_size
+
+obj = cv2.imread("spheres/sphere.png", 1)
+obj = imutils.resize(obj, width=int(obj.shape[0] * ratio))
 
 cv2.imshow("image", img)
 
 body = computeBodyBinary(img)
+
+#cv2.imshow('body', body)
+
 centers = computePositionObject(img, obj)
 
 for i in range(0, len(centers)):
