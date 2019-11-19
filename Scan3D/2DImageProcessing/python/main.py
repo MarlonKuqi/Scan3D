@@ -46,20 +46,35 @@ def computePositionObject(img, obj):
 
 
 def computeBodyBinary(img):
-    blur = cv2.GaussianBlur(img,(21,21),0)
+    blur = cv2.GaussianBlur(img,(7,7),0)
     
     edges = cv2.Canny(blur,1,20)
     
     
     (thresh, blackAndWhiteImage) = cv2.threshold(edges, 0, 255, cv2.THRESH_BINARY)
     
-    kernel = np.ones((5,5), np.uint8) 
+    kernel = np.ones((3,3), np.uint8)
+
+    # cv2.imshow("edges", edges)
+    # cv2.imshow("blur", blur) 
+    # cv2.waitKey(0)
     
-    closed_img = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_CLOSE, kernel, iterations=20)
-    #img_dilation = cv2.dilate(blackAndWhiteImage, kernel, iterations=25) 
-    #img_erode = cv2.erode(img_dilation, kernel, iterations=25)
-    
+    closed_img = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_CLOSE, kernel, iterations=17)
+    #closed_img = blackAndWhiteImage  
     return cv2.cvtColor(closed_img,cv2.COLOR_GRAY2RGB)
+
+edges_colors = [
+    (169, 66, 61),
+    (40, 130, 69),
+    (68, 66, 105),
+    (218, 201, 53),
+]
+
+
+def detectColor(pixel, threshold):
+
+    pass
+
 
 
 def computeLinks(centers, body, img): 
@@ -115,7 +130,7 @@ cv2.imshow("image", img)
 
 body = computeBodyBinary(img)
 
-#cv2.imshow('body', body)
+cv2.imshow('body', imutils.resize(body, width=512))
 
 centers = computePositionObject(img, obj)
 
