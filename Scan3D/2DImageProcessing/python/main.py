@@ -2,7 +2,6 @@ import cv2
 import imutils
 import numpy as np
 import math
-from matplotlib import pyplot as plt
 from sklearn.cluster import MeanShift, estimate_bandwidth
 
 def normalize(img):
@@ -39,8 +38,18 @@ def apply_threshold(img, threshold):
             else:
                 newImg[i,j] = img[i,j]
     return newImg;
+
+def apply_threshold_binary(img, threshold):
+    newImg = np.zeros((len(img), len(img[0])), np.uint8);
+    for i in range(len(img)):
+        for j in range(len(img[0])):
+            if img[i,j] < threshold:
+                newImg[i,j] = 0;
+            else:
+                newImg[i,j] = 255;
+    return newImg;
             
-img = cv2.imread("images/hexa.jpg",1);
+img = cv2.imread("images/image4.jpeg",1);
 img = imutils.resize(img, width=512);
 
 grad_img = gradient(img,0.0);
@@ -62,15 +71,20 @@ for i in range(len(blur_thresholded)-1):
 grey_map = cv2.blur(grey_map,(51,51));
 grey_map = normalize(grey_map);
 
-grey_map_thresholded = apply_threshold(grey_map,0.4)
+grey_map_thresholded = apply_threshold_binary(grey_map,0.4)
 
 ret, thresh = cv2.threshold(grey_map_thresholded,0,255,0)
 
 connectivity = 8
 
-output = cv2.connectedComponentsWithStats(thresh, connectivity, cv2.CV_32S)
+num_cc, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, connectivity)
+
+centroids = np.delete(centroids,0,0);
+
+for coord in centroids:
+    cv2.circle(img, (int(coord[0]),int(coord[1])), 40, (255,255,0))
 
 cv2.imshow("Originale", img);
-cv2.imshow("Resultat", thresh);
+cv2.imshow("Resultat", grey_map_thresholded);
 cv2.waitKey(0);
 cv2.destroyAllWindows();
