@@ -1,152 +1,76 @@
-######## Import #############
 import cv2
-from scipy import misc
-import numpy as np
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-import argparse
 import imutils
+import numpy as np
+import math
+from matplotlib import pyplot as plt
+from sklearn.cluster import MeanShift, estimate_bandwidth
 
+def normalize(img):
+    max = np.amax(img);
+    if max != 0:
+        img = img/max;
+    return img;
 
-######## Function ##########
-def computePositionObject(img, obj):
-    nb_ball_max = 25;
+def L2_norm(vec1, vec2):
+    return math.sqrt((float(vec2[0]) - float(vec1[0]))**2 + (float(vec2[1]) - float(vec1[1]))**2 + (float(vec2[2]) - float(vec1[2]))**2);
+
+def channel_difference(vec):
+    return math.sqrt( (float(vec[0]) - float(vec[1]))**2 + (float(vec[0]) - float(vec[2]))**2 + (float(vec[1]) - float(vec[2]))**2);
+
+def gradient(img, threshold):
+    grad = np.zeros((len(img), len(img[0])), np.float64);
+    for i in range(len(img) -1):
+        for j in range(len(img[0]) -1):
+            grad[i,j] = L2_norm(img[i,j],img[i+1,j]) + L2_norm(img[i,j],img[i,j+1]);
+    grad = normalize(grad);
     
-    # ORB Detector
-    orb = cv2.ORB_create(nfeatures=1000, scoreType=cv2.ORB_FAST_SCORE)
-    kp1, des1 = orb.detectAndCompute(obj, None)
-    kp2, des2 = orb.detectAndCompute(img, None)
-    
-    # Brute Force Matching
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(des1, des2)
-    matches = sorted(matches, key = lambda x:x.distance)
-    
-    matches_pts = []
-    for i in range(0,len(matches)):
-        matches_pts.append(kp2[matches[i].trainIdx].pt);
-    
-    
-    matches_pts = np.array(matches_pts)
-    
-    optimal_k = 0
-    score = 0
-    for n_cluster in range(2, nb_ball_max):
-        kmeans = KMeans(n_clusters=n_cluster).fit(matches_pts)
-        label = kmeans.labels_
-        sil_coeff = silhouette_score(matches_pts, label, metric='euclidean')
-        if score < sil_coeff:
-            optimal_k = n_cluster
-            score = sil_coeff
-    
-    kmeans = KMeans(n_clusters=optimal_k, random_state=0).fit(matches_pts)
-    centers = np.array(kmeans.cluster_centers_)
-    
-    return centers
+    for i in range(len(grad) -1):
+        for j in range(len(grad[0]) -1):
+            if grad[i,j] < threshold:
+                grad[i,j] = 0;
+    return grad;
 
+def apply_threshold(img, threshold):
+    newImg = np.zeros((len(img), len(img[0])), np.float64);
+    for i in range(len(img)):
+        for j in range(len(img[0])):
+            if img[i,j] < threshold:
+                newImg[i,j] = 0;
+            else:
+                newImg[i,j] = img[i,j]
+    return newImg;
+            
+img = cv2.imread("images/hexa.jpg",1);
+img = imutils.resize(img, width=512);
 
-def computeBodyBinary(img):
-    blur = cv2.GaussianBlur(img,(7,7),0)
-    
-    edges = cv2.Canny(blur,1,20)
-    
-    
-    (thresh, blackAndWhiteImage) = cv2.threshold(edges, 0, 255, cv2.THRESH_BINARY)
-    
-    kernel = np.ones((3,3), np.uint8)
+grad_img = gradient(img,0.0);
 
-    # cv2.imshow("edges", edges)
-    # cv2.imshow("blur", blur) 
-    # cv2.waitKey(0)
-    
-    closed_img = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_CLOSE, kernel, iterations=17)
-    #closed_img = blackAndWhiteImage  
-    return cv2.cvtColor(closed_img,cv2.COLOR_GRAY2RGB)
+blur = cv2.blur(grad_img,(21,21));
+blur = normalize(blur);
 
-edges_colors = [
-    (169, 66, 61),
-    (40, 130, 69),
-    (68, 66, 105),
-    (218, 201, 53),
-]
+blur_thresholded = apply_threshold(blur,0.3);
 
+grey_map = np.zeros((len(img), len(img[0])), np.uint8);
+grey = []
+for i in range(len(blur_thresholded)-1):
+    for j in range(len(blur_thresholded[0])-1):
+        if blur_thresholded[i,j] > 0:
+         if L2_norm(img[i,j], (30,30,30)) < 100 and channel_difference(img[i,j]) < 30: 
+            grey.append([i,j]);
+            grey_map[i,j] = 255;
 
-def detectColor(pixel, threshold):
+grey_map = cv2.blur(grey_map,(51,51));
+grey_map = normalize(grey_map);
 
-    pass
+grey_map_thresholded = apply_threshold(grey_map,0.4)
 
+ret, thresh = cv2.threshold(grey_map_thresholded,0,255,0)
 
+connectivity = 8
 
-def computeLinks(centers, body, img): 
-    steps = 100
-    for i in range(0, len(centers)):
-        for j in range(0, len(centers)):
-            if i != j :
-                xDiff = centers[j][0] - centers[i][0];
-                yDiff = centers[j][1] - centers[i][1];
-                
-                xStep = xDiff/steps;
-                yStep = yDiff/steps;
-                
-                compt = 0;
-                transitivity = [];
-                
-                centerColor = tuple(body[int(centers[i][1]), int(centers[i][0])])
-                
-                for k in range(1,steps):
-                    pixel = [0] * 2;
-                    pixel[0] = centers[i][0] + xStep * k; 
-                    pixel[1] = centers[i][1] + yStep * k; 
-                    
-                    if tuple(body[int(pixel[1]), int(pixel[0])]) != (0,0,0):
-                        compt = compt + 1;
-                    if tuple(body[int(pixel[1]), int(pixel[0])]) != (0,0,0) and tuple(body[int(pixel[1]), int(pixel[0])]) != (255,255,255) and tuple(body[int(pixel[1]), int(pixel[0])]) != centerColor:
-                        if(tuple(body[int(pixel[1]), int(pixel[0])]) not in transitivity):
-                            transitivity.append(tuple(body[int(pixel[1]), int(pixel[0])]));
-                
-                
-                if compt > 0.7 * steps and len(transitivity) < 2:
-                    cv2.line(img, (int(centers[i][0]),int(centers[i][1])) , (int(centers[j][0]),int(centers[j][1])), (0, 255, 0), thickness=3, lineType=8)
-                    cv2.circle(img,(int(centers[i][0]),int(centers[i][1])), 20, (0,0,255), -1)
+output = cv2.connectedComponentsWithStats(thresh, connectivity, cv2.CV_32S)
 
-
-
-######### MAIN ############
-
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", required=True, help="path to the input image")
-args = vars(ap.parse_args())
-
-
-img = cv2.imread(args["image"])
-old_size = float(img.shape[0])
-img = imutils.resize(img, width=1024)
-ratio = float(img.shape[0]) / old_size
-
-obj = cv2.imread("spheres/sphere.png", 1)
-obj = imutils.resize(obj, width=int(obj.shape[0] * ratio))
-
-cv2.imshow("image", img)
-
-body = computeBodyBinary(img)
-
-cv2.imshow('body', imutils.resize(body, width=512))
-
-centers = computePositionObject(img, obj)
-
-for i in range(0, len(centers)):
-    cv2.circle(body,(int(centers[i][0]),int(centers[i][1])), 40, (int(255/(i+1)),0,0), -1)
-  
-    
-computeLinks(centers, body, img);
-
-img = imutils.resize(img, width=512)
-#cv2.imshow("body", body)
-cv2.imshow("image", img)
-cv2.waitKey(0)
-
-
-
-
-
-
+cv2.imshow("Originale", img);
+cv2.imshow("Resultat", thresh);
+cv2.waitKey(0);
+cv2.destroyAllWindows();
