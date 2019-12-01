@@ -1,9 +1,10 @@
+################## IMPORT ##################
 import cv2
 import imutils
 import numpy as np
 import math
-from sklearn.cluster import MeanShift, estimate_bandwidth
 
+################## FUNCTION ##################
 def normalize(img):
     max = np.amax(img);
     if max != 0:
@@ -43,48 +44,129 @@ def apply_threshold_binary(img, threshold):
     newImg = np.zeros((len(img), len(img[0])), np.uint8);
     for i in range(len(img)):
         for j in range(len(img[0])):
-            if img[i,j] < threshold:
+            if img[i,j] <= threshold:
                 newImg[i,j] = 0;
             else:
                 newImg[i,j] = 255;
     return newImg;
-            
-img = cv2.imread("images/image4.jpeg",1);
-img = imutils.resize(img, width=512);
 
-grad_img = gradient(img,0.0);
+def detect_gray_edge(grad, img):
+    grey_map = np.zeros((len(img), len(img[0])), np.uint8);
+    for i in range(len(grad)-1):
+        for j in range(len(grad[0])-1):
+            if grad[i,j] > 0:
+             if L2_norm(img[i,j], (30,30,30)) < 100 and channel_difference(img[i,j]) < 30: 
+                grey_map[i,j] = 255;
+    return grey_map
 
-blur = cv2.blur(grad_img,(21,21));
-blur = normalize(blur);
+def detect_links(centroids, grad, grey_map):
+    links = []
+    sample = 100
+    for i in range(len(centroids)):
+        for j in range(i,len(centroids)):
+            if i != j:
+                x_step = (centroids[j][0] - centroids[i][0])/sample
+                y_step = (centroids[j][1] - centroids[i][1])/sample
+                link = True
+                x = centroids[i][0]
+                y = centroids[i][1]
+                
+                count = 0
+                class_compt = 0
+                previous_class = False
+                while link and count < sample :
+                    if grad[int(y), int(x)] == 0.0:
+                        link = False
+                    
+                    if not previous_class:
+                        if grey_map[int(y), int(x)] > 0.0:
+                            previous_class = True
+                            class_compt +=1 
+                    else:
+                        if grey_map[int(y), int(x)] == 0.0:
+                            previous_class = False
+                        
+                        
+                    count += 1
+                    x = x + x_step
+                    y = y + y_step
+                
+                if link and class_compt < 3:
+                    links.append([i,j])
+                
+    return links
 
-blur_thresholded = apply_threshold(blur,0.3);
+def substract_binary_maps(bin1, bin2):
+    sub_map = np.zeros((len(bin1), len(bin1[0])), np.uint8);
+    for i in range(len(bin1)):
+        for j in range(len(bin1[0])):
+            if int(bin1[i,j]) - int(bin2[i,j]) >= 0: 
+                sub_map[i,j] = bin1[i,j] - bin2[i,j];
+            else:
+                sub_map[i,j] = bin1[i,j]
+    return sub_map
 
-grey_map = np.zeros((len(img), len(img[0])), np.uint8);
-grey = []
-for i in range(len(blur_thresholded)-1):
-    for j in range(len(blur_thresholded[0])-1):
-        if blur_thresholded[i,j] > 0:
-         if L2_norm(img[i,j], (30,30,30)) < 100 and channel_difference(img[i,j]) < 30: 
-            grey.append([i,j]);
-            grey_map[i,j] = 255;
+def add_binary_maps(bin1, bin2):
+    sub_map = np.zeros((len(bin1), len(bin1[0])), np.uint8);
+    for i in range(len(bin1)):
+        for j in range(len(bin1[0])):
+            if int(bin1[i,j]) + int(bin2[i,j]) <= 255: 
+                sub_map[i,j] = bin1[i,j] + bin2[i,j];
+            else:
+                sub_map[i,j] = bin1[i,j]
+    return sub_map
+ 
 
-grey_map = cv2.blur(grey_map,(51,51));
-grey_map = normalize(grey_map);
+################## MAIN ##################
+if __name__ == "__main__":
+    img_name = "hexa_angle.jpg"
+    
+    """ LOAD IMAGE"""
+    img = cv2.imread("data/" + img_name,1);
+    img = imutils.resize(img, width=512);
+    
+    """ GET THE SHAPE"""
+    grad_img = gradient(img,0.0);
+    
+    """ REDUCE NOISE TO EXCLUDE THE BAKCGROUND"""
+    blur = cv2.blur(grad_img,(21,21));
+    blur = normalize(blur);
+    blur_thresholded_high = apply_threshold(blur,0.3);
+    blur_thresholded_low = apply_threshold_binary(blur,0.1);
+    
+    """ KEEP THE EGDGE ASSOCIATED TO GREY PIXELS"""
+    grey_map = detect_gray_edge(blur_thresholded_high, img)
+    grey_map = cv2.blur(grey_map,(51,51));
+    grey_map = normalize(grey_map)
+    grey_map_thresholded = apply_threshold_binary(grey_map,0.4)
+    
+    """ TRANSFORME EVERY CLUSTER OF GREY PIXEL INTO N CENTROIDS """
+    ret, thresh = cv2.threshold(grey_map_thresholded,0,255,0)
+    connectivity = 8
+    num_cc, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, connectivity)
+    centroids = np.delete(centroids,0,0);
 
-grey_map_thresholded = apply_threshold_binary(grey_map,0.4)
-
-ret, thresh = cv2.threshold(grey_map_thresholded,0,255,0)
-
-connectivity = 8
-
-num_cc, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, connectivity)
-
-centroids = np.delete(centroids,0,0);
-
-for coord in centroids:
-    cv2.circle(img, (int(coord[0]),int(coord[1])), 40, (255,255,0))
-
-cv2.imshow("Originale", img);
-cv2.imshow("Resultat", grey_map_thresholded);
-cv2.waitKey(0);
-cv2.destroyAllWindows();
+    """ FIND LINKS """
+    grey_map_low = detect_gray_edge(blur_thresholded_low, img)
+    grey_map_low = apply_threshold_binary(grey_map_low,0.0)
+    sub_map = substract_binary_maps(blur_thresholded_low, grey_map_low)
+    add_map = add_binary_maps(sub_map, grey_map_thresholded)
+    links = detect_links(centroids, add_map, grey_map_thresholded)
+    
+    """ DRAW THE CENTROIDS """
+    for coord in centroids:
+        cv2.circle(img, (int(coord[0]),int(coord[1])), 30, (0,0,255))
+    
+    """ DRAW LINKS """
+    for link in links:
+        p1 = (int(centroids[link[0]][0]) , int(centroids[link[0]][1]))
+        p2 = (int(centroids[link[1]][0]), int(centroids[link[1]][1]))
+        cv2.line(img, p1, p2, (0, 255, 0), thickness=3, lineType=8)
+    
+    """ DISPLAY THE IMAGE """
+    cv2.imshow("Resultat", img);
+    #cv2.imshow("temp_resultat", add_map);
+    cv2.waitKey(0);
+    cv2.destroyAllWindows();
+    
+    cv2.imwrite("results/" + img_name, img);
