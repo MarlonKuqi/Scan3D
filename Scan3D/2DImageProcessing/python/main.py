@@ -62,14 +62,14 @@ def detect_gray_edge(grad, img):
                 grey_map[i,j] = 255;
     return grey_map
 
-def detect_links(centroids, grad, grey_map):
+def detect_links(centroids, grad, grey_map, img):
     links = []
-    sample = 100
+    samples = 100
     for i in range(len(centroids)):
         for j in range(i,len(centroids)):
             if i != j:
-                x_step = (centroids[j][0] - centroids[i][0])/sample
-                y_step = (centroids[j][1] - centroids[i][1])/sample
+                x_step = (centroids[j][0] - centroids[i][0])/samples
+                y_step = (centroids[j][1] - centroids[i][1])/samples
                 link = True
                 x = centroids[i][0]
                 y = centroids[i][1]
@@ -77,7 +77,14 @@ def detect_links(centroids, grad, grey_map):
                 count = 0
                 class_compt = 0
                 previous_class = False
-                while link and count < sample :
+                sum_color = np.zeros([1, 3])
+                while link and count < samples :
+                    
+                    pixel = img[int(y), int(x)]
+                    sum_color = sum_color + pixel
+                    
+                    # I think this is probably a bit too harsh. Maybe stop if it happens multiple times instead of only once. 
+                    # If really think this criteria is too sensible to the camera we use to take the pixtures and the resolution at which we make the processing
                     if grad[int(y), int(x)] == 0.0:
                         link = False
                     
@@ -95,7 +102,7 @@ def detect_links(centroids, grad, grey_map):
                     y = y + y_step
                 
                 if link and class_compt < 3:
-                    links.append([i,j])
+                    links.append([i,j, sum_color[0] / samples])
                 
     return links
 
@@ -146,7 +153,7 @@ if __name__ == "__main__":
     grey_map = normalize(grey_map)
     grey_map_thresholded = apply_threshold_binary(grey_map,0.4)
     
-    """ TRANSFORME EVERY CLUSTER OF GREY PIXEL INTO N CENTROIDS """
+    """ TRANSFORM EVERY CLUSTER OF GREY PIXEL INTO N CENTROIDS """
     ret, thresh = cv2.threshold(grey_map_thresholded,0,255,0)
     connectivity = 8
     num_cc, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, connectivity)
@@ -157,7 +164,7 @@ if __name__ == "__main__":
     grey_map_low = apply_threshold_binary(grey_map_low,0.0)
     sub_map = substract_binary_maps(blur_thresholded_low, grey_map_low)
     add_map = add_binary_maps(sub_map, grey_map_thresholded)
-    links = detect_links(centroids, add_map, grey_map_thresholded)
+    links = detect_links(centroids, add_map, grey_map_thresholded, img)
     
     """ DRAW THE CENTROIDS """
     for coord in centroids:
@@ -167,7 +174,8 @@ if __name__ == "__main__":
     for link in links:
         p1 = (int(centroids[link[0]][0]) , int(centroids[link[0]][1]))
         p2 = (int(centroids[link[1]][0]), int(centroids[link[1]][1]))
-        cv2.line(img, p1, p2, (0, 255, 0), thickness=3, lineType=8)
+        color = link[2]
+        cv2.line(img, p1, p2, color, thickness=3, lineType=8)
     
     """ DISPLAY THE IMAGE """
     cv2.imshow("Resultat", img);
