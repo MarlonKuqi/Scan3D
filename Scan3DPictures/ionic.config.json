@@ -1,0 +1,7 @@
+{
+  "name": "Scan3DPictures",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "angular"
+}

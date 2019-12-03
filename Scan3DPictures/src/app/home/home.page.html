@@ -1,0 +1,21 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      Ionic Blank
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-card *ngFor="let picture of pictures; let index=i">
+    <ion-header>
+      Image N°{{i}}
+    </ion-header>
+    <ion-content>
+      <ion-img src=""></ion-img>
+    </ion-content>
+  </ion-card>
+</ion-content>
+<ion-footer>
+  <ion-button size="large" expand="block" color="primary"><ion-icon name="camera"></ion-icon></ion-button>
+</ion-footer>
