@@ -3,6 +3,7 @@ import imutils
 import numpy as np
 import math
 from matplotlib import pyplot as plt
+import argparse
 from sklearn.cluster import MeanShift, estimate_bandwidth
 
 def normalize(img):
@@ -39,9 +40,17 @@ def apply_threshold(img, threshold):
             else:
                 newImg[i,j] = img[i,j]
     return newImg;
-            
-img = cv2.imread("images/hexa.jpg",1);
-img = imutils.resize(img, width=512);
+            ######### MAIN ############
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--image", required=True, help="path to the input image")
+args = vars(ap.parse_args())
+
+
+img = cv2.imread(args["image"])
+old_size = float(img.shape[0])
+img = imutils.resize(img, width=1024)
+
 
 grad_img = gradient(img,0.0);
 
