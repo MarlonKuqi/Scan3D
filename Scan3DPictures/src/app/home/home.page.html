@@ -1,21 +1,31 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>
-      Ionic Blank
+      Scan3DPictures
     </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="onClickSettings()"><ion-icon name="cog"></ion-icon></ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <ion-card *ngFor="let picture of pictures; let index=i">
-    <ion-header>
-      Image N°{{i}}
-    </ion-header>
-    <ion-content>
-      <ion-img src=""></ion-img>
-    </ion-content>
-  </ion-card>
+<ion-content padding>
+  <ion-grid>
+    <ion-row>
+      <ion-col size="6" *ngFor="let picture of pictures; let i=index">
+        <ion-card [ngClass]="{'sent': picture.sent, 'not-sent': !picture.sent}">
+          <ion-card-header>
+            Image N°{{ i }}
+            <ion-button (click)="onDeletePhoto(i)" fill="clear"><ion-icon name="trash" slot="icon-only"></ion-icon></ion-button>
+          </ion-card-header>
+          <ion-card-content>
+              <ion-img (click)="onClickPhoto(i)" [src]="picture.base64"></ion-img>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>
 <ion-footer>
-  <ion-button size="large" expand="block" color="primary"><ion-icon name="camera"></ion-icon></ion-button>
+  <ion-button size="large" expand="block" color="primary" (click)="camera()"><ion-icon name="camera"></ion-icon></ion-button>
 </ion-footer>
