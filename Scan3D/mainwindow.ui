@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Scan3D</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="minimumSize">
@@ -59,7 +59,10 @@
             </size>
            </property>
            <property name="text">
-            <string>Image à traiter</string>
+            <string>INPUT</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -82,12 +85,12 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>271</width>
-              <height>271</height>
+              <width>281</width>
+              <height>321</height>
              </rect>
             </property>
             <property name="text">
-             <string>TextLabel</string>
+             <string/>
             </property>
            </widget>
           </widget>
@@ -103,7 +106,7 @@
           </size>
          </property>
          <property name="text">
-          <string/>
+          <string>2D</string>
          </property>
         </widget>
        </item>
@@ -118,7 +121,10 @@
             </size>
            </property>
            <property name="text">
-            <string>Image traitée</string>
+            <string>OUTPUT</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -141,12 +147,12 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>351</width>
-              <height>301</height>
+              <width>281</width>
+              <height>321</height>
              </rect>
             </property>
             <property name="text">
-             <string>TextLabel</string>
+             <string/>
             </property>
            </widget>
           </widget>
@@ -157,6 +163,9 @@
      </item>
      <item>
       <widget class="QProgressBar" name="progressBar">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="value">
         <number>24</number>
        </property>

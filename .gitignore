@@ -1,6 +1,13 @@
 # Created by https://www.gitignore.io/api/qt,c++,qtcreator
 # Edit at https://www.gitignore.io/?templates=qt,c++,qtcreator
 
+## Conan ##
+conan.lock
+conanbuildinfo.cmake
+conanbuildinfo.txt
+conaninfo.txt
+graph_info.json
+
 ### C++ ###
 # Prerequisites
 *.d
