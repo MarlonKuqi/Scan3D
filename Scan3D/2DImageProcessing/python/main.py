@@ -8,6 +8,42 @@ import argparse
 from sklearn.cluster import MeanShift, estimate_bandwidth
 
 ################## FUNCTION ##################
+
+ref_colors = [
+    np.asarray([48, 202, 215], np.float32), #yellow
+    np.asarray([50, 49, 152], np.float32), #red
+    np.asarray([68, 124, 35], np.float32), #green
+    np.asarray([109, 39, 39], np.float32), #blue
+]
+
+def normalized(vec):
+    n = np.linalg.norm(vec)
+    if n == 0:
+        return vec
+    else:
+        return vec / n
+
+def criteria(a, b):
+    a = a / 255
+    b = b / 255
+    l = 0.4
+    dist = np.linalg.norm(a - b)
+    dist = dist * dist
+    prod = np.dot(normalized(a), normalized(b))
+    return l * dist - (1 - l) * prod
+
+def find_color(pixel):
+    best = 0
+    best_dist = 100000;
+    i = 0
+    for ref in ref_colors:
+        dist = criteria(pixel, ref)
+        if dist < best_dist:
+            best_dist = dist
+            best = i
+        i = i + 1
+    return best
+
 def normalize(img):
     max = np.amax(img);
     if max != 0:
@@ -78,10 +114,13 @@ def detect_links(centroids, grad, grey_map, img):
                 class_compt = 0
                 previous_class = False
                 sum_color = np.zeros([1, 3])
+                color_samples = 0
                 while link and count < samples :
                     
                     pixel = img[int(y), int(x)]
-                    sum_color = sum_color + pixel
+                    if(grey_map[int(y), int(x)] < 0.5 ):
+                        sum_color = sum_color + pixel
+                        color_samples = color_samples + 1
                     
                     # I think this is probably a bit too harsh. Maybe stop if it happens multiple times instead of only once. 
                     # If really think this criteria is too sensible to the camera we use to take the pixtures and the resolution at which we make the processing
@@ -102,7 +141,9 @@ def detect_links(centroids, grad, grey_map, img):
                     y = y + y_step
                 
                 if link and class_compt < 3:
-                    links.append([i,j, sum_color[0] / samples])
+                    estimated_color = sum_color[0] / color_samples
+                    index_color = find_color(estimated_color)
+                    links.append([i,j, index_color])
                 
     return links
 
@@ -164,17 +205,20 @@ if __name__ == "__main__":
     grey_map_low = apply_threshold_binary(grey_map_low,0.0)
     sub_map = substract_binary_maps(blur_thresholded_low, grey_map_low)
     add_map = add_binary_maps(sub_map, grey_map_thresholded)
+    #cv2.imshow('gmt', grey_map_thresholded)
     links = detect_links(centroids, add_map, grey_map_thresholded, img)
     
     """ DRAW THE CENTROIDS """
     for coord in centroids:
-        cv2.circle(img, (int(coord[0]),int(coord[1])), 30, (0,0,255))
+        cv2.circle(img, (int(coord[0]),int(coord[1])), 30, (0,255,0))
     
     """ DRAW LINKS """
     for link in links:
         p1 = (int(centroids[link[0]][0]) , int(centroids[link[0]][1]))
         p2 = (int(centroids[link[1]][0]), int(centroids[link[1]][1]))
-        color = link[2]
+        color_index = link[2]
+        color = ref_colors[color_index]
+        color = (int(color[0]), int(color[1]), int(color[2]))
         cv2.line(img, p1, p2, color, thickness=3, lineType=8)
     
     """ DISPLAY THE IMAGE """
