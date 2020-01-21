@@ -66,17 +66,16 @@ def L2_norm(vec1, vec2):
 def channel_difference(vec):
     return math.sqrt( (float(vec[0]) - float(vec[1]))**2 + (float(vec[0]) - float(vec[2]))**2 + (float(vec[1]) - float(vec[2]))**2);
 
-def gradient(img, threshold):
+def gradient(img, threshold):   
     grad = np.zeros((len(img), len(img[0])), np.float64);
+    
     for i in range(len(img) -1):
         for j in range(len(img[0]) -1):
             grad[i,j] = L2_norm(img[i,j],img[i+1,j]) + L2_norm(img[i,j],img[i,j+1]);
     grad = normalize(grad);
     
-    for i in range(len(grad) -1):
-        for j in range(len(grad[0]) -1):
-            if grad[i,j] < threshold:
-                grad[i,j] = 0;
+    np.where(grad < threshold, 0, grad)
+
     return grad;
 
 def apply_threshold(img, threshold):
@@ -202,6 +201,8 @@ def graph_to_str(centroids, links):
 
 ################## MAIN ##################
 if __name__ == "__main__":
+    start_time = time.time()
+
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", required=True, help="path to the input image")
     args = vars(ap.parse_args())
@@ -212,33 +213,48 @@ if __name__ == "__main__":
     img = imutils.resize(img, width=512)
     
     """ GET THE SHAPE"""
+    print("Processing gradient...")
     grad_img = gradient(img,0.0);
+    grad_time = time.time()
+    print("Processed in", grad_time - start_time ,"seconds")
     
     """ REDUCE NOISE TO EXCLUDE THE BAKCGROUND"""
+    print("Processing blur...")
     blur = cv2.blur(grad_img,(21,21));
     blur = normalize(blur);
     blur_thresholded_high = apply_threshold(blur,0.3);
     blur_thresholded_low = apply_threshold_binary(blur,0.1);
+    blur_time = time.time()
+    print("Processed in", blur_time - grad_time ,"seconds")
     
     """ KEEP THE EGDGE ASSOCIATED TO GREY PIXELS"""
+    print("Processing edges...")
     grey_map = detect_gray_edge(blur_thresholded_high, img)
     grey_map = cv2.blur(grey_map,(51,51));
     grey_map = normalize(grey_map)
     grey_map_thresholded = apply_threshold_binary(grey_map,0.4)
+    edge_time = time.time()
+    print("Processed in", edge_time - blur_time ,"seconds")
     
     """ TRANSFORM EVERY CLUSTER OF GREY PIXEL INTO N CENTROIDS """
+    print("Processing centroids...")
     ret, thresh = cv2.threshold(grey_map_thresholded,0,255,0)
     connectivity = 8
     num_cc, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, connectivity)
     centroids = np.delete(centroids,0,0);
-
+    centroid_time = time.time()
+    print("Processed in", centroid_time - edge_time ,"seconds")
+    
     """ FIND LINKS """
+    print("Processing links...")
     grey_map_low = detect_gray_edge(blur_thresholded_low, img)
     grey_map_low = apply_threshold_binary(grey_map_low,0.0)
     sub_map = substract_binary_maps(blur_thresholded_low, grey_map_low)
     add_map = add_binary_maps(sub_map, grey_map_thresholded)
     #cv2.imshow('gmt', grey_map_thresholded)
     links = detect_links(centroids, add_map, grey_map_thresholded, img)
+    link_time = time.time()
+    print("Processed in", link_time - centroid_time ,"seconds")
     
     canvas = img * 0
     
@@ -255,4 +271,5 @@ if __name__ == "__main__":
     cv2.waitKey(0);
     cv2.destroyAllWindows();
     
+    print("Saving...")
     cv2.imwrite("results/" + img_name, img);
