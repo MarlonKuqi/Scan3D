@@ -7,8 +7,17 @@ from matplotlib import pyplot as plt
 import argparse
 from sklearn.cluster import MeanShift, estimate_bandwidth
 import time
-
 ################## FUNCTION ##################
+
+t = time.time()
+
+def tic():
+    t = time.time()
+
+def toc():
+    elapsed = time.time() - t
+    print(elapsed)
+
 
 ref_colors = [
     np.asarray([48, 202, 215], np.float32), #yellow
@@ -148,6 +157,28 @@ def add_binary_maps(bin1, bin2):
     return add_map
  
 
+def draw_graph(img, centroids, links):
+    """ DRAW THE CENTROIDS """
+    for coord in centroids:
+        cv2.circle(img, (int(coord[0]),int(coord[1])), 15, (255,255,255))
+
+    """ DRAW LINKS """
+    for link in links:
+        p1 = (int(centroids[link[0]][0]) , int(centroids[link[0]][1]))
+        p2 = (int(centroids[link[1]][0]), int(centroids[link[1]][1]))
+        color_index = link[2]
+        color = ref_colors[color_index]
+        color = (int(color[0]), int(color[1]), int(color[2]))
+        cv2.line(img, p1, p2, color, thickness=3, lineType=8)
+
+def graph_to_str(centroids, links):
+    array = [[col[0], col[1], col[2]] for col in ref_colors]
+    res = str(array) + '\n'
+    array = [[pos[0], pos[1]] for pos in centroids]
+    res = res + str(array) + '\n'
+    res = res + str(links) + '\n'
+    return res
+
 ################## MAIN ##################
 if __name__ == "__main__":
     start_time = time.time()
@@ -205,25 +236,17 @@ if __name__ == "__main__":
     link_time = time.time()
     print("Processed in", link_time - centroid_time ,"seconds")
     
-    print("Drawing...")
-    """ DRAW THE CENTROIDS """
-    for coord in centroids:
-        cv2.circle(img, (int(coord[0]),int(coord[1])), 30, (0,255,0))
+    canvas = img * 0
     
-    """ DRAW LINKS """
-    for link in links:
-        p1 = (int(centroids[link[0]][0]) , int(centroids[link[0]][1]))
-        p2 = (int(centroids[link[1]][0]), int(centroids[link[1]][1]))
-        color_index = link[2]
-        color = ref_colors[color_index]
-        color = (int(color[0]), int(color[1]), int(color[2]))
-        cv2.line(img, p1, p2, color, thickness=3, lineType=8)
-    draw_time = time.time()
-    print("Drawn in", draw_time - link_time ,"seconds")
+    draw_graph(canvas, centroids, links)
+    
+    graph_str = graph_to_str(centroids, links)
+    with open('graph.txt', 'w') as file:
+        file.write(graph_str)
     
     """ DISPLAY THE IMAGE """
-    print("Displaying...")
-    cv2.imshow("Resultat", img);
+    cv2.imshow("Resultat", img)
+    cv2.imshow("canvas", canvas)
     #cv2.imshow("temp_resultat", add_map);
     cv2.waitKey(0);
     cv2.destroyAllWindows();
