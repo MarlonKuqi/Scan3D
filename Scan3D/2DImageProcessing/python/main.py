@@ -70,32 +70,22 @@ def gradient(img, threshold):
     return grad;
 
 def apply_threshold(img, threshold):
-    newImg = np.zeros((len(img), len(img[0])), np.float64);
-    for i in range(len(img)):
-        for j in range(len(img[0])):
-            if img[i,j] < threshold:
-                newImg[i,j] = 0;
-            else:
-                newImg[i,j] = img[i,j]
+    newImg = np.where(img < threshold, 0, img)
     return newImg;
 
 def apply_threshold_binary(img, threshold):
-    newImg = np.zeros((len(img), len(img[0])), np.uint8);
-    for i in range(len(img)):
-        for j in range(len(img[0])):
-            if img[i,j] <= threshold:
-                newImg[i,j] = 0;
-            else:
-                newImg[i,j] = 255;
+    newImg = np.where(img <= threshold, 0, 255).astype(np.uint8)
     return newImg;
 
 def detect_gray_edge(grad, img):
     grey_map = np.zeros((len(img), len(img[0])), np.uint8);
+    
     for i in range(len(grad)-1):
         for j in range(len(grad[0])-1):
             if grad[i,j] > 0:
              if L2_norm(img[i,j], (30,30,30)) < 100 and channel_difference(img[i,j]) < 30: 
                 grey_map[i,j] = 255;
+
     return grey_map
 
 def detect_links(centroids, grad, grey_map, img):
@@ -148,24 +138,14 @@ def detect_links(centroids, grad, grey_map, img):
     return links
 
 def substract_binary_maps(bin1, bin2):
-    sub_map = np.zeros((len(bin1), len(bin1[0])), np.uint8);
-    for i in range(len(bin1)):
-        for j in range(len(bin1[0])):
-            if int(bin1[i,j]) - int(bin2[i,j]) >= 0: 
-                sub_map[i,j] = bin1[i,j] - bin2[i,j];
-            else:
-                sub_map[i,j] = bin1[i,j]
+    sub_map = bin1.copy().astype(np.float64)
+    sub_map = np.where(sub_map - bin2 >= 0, sub_map - bin2, sub_map).astype(np.uint8)
     return sub_map
 
 def add_binary_maps(bin1, bin2):
-    sub_map = np.zeros((len(bin1), len(bin1[0])), np.uint8);
-    for i in range(len(bin1)):
-        for j in range(len(bin1[0])):
-            if int(bin1[i,j]) + int(bin2[i,j]) <= 255: 
-                sub_map[i,j] = bin1[i,j] + bin2[i,j];
-            else:
-                sub_map[i,j] = bin1[i,j]
-    return sub_map
+    add_map = bin1.copy().astype(np.float64)
+    add_map = np.where(add_map + bin2 <= 255, add_map + bin2, add_map).astype(np.uint8)
+    return add_map
  
 
 ################## MAIN ##################
