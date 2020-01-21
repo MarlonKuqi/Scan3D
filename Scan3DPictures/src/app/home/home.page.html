@@ -12,16 +12,14 @@
 <ion-content padding>
   <ion-grid>
     <ion-row>
-      <ion-col size="6" *ngFor="let picture of pictures; let i=index">
-        <ion-card [ngClass]="{'sent': picture.sent, 'not-sent': !picture.sent}">
-          <ion-card-header>
-            Image N°{{ i }}
-            <ion-button (click)="onDeletePhoto(i)" fill="clear"><ion-icon name="trash" slot="icon-only"></ion-icon></ion-button>
-          </ion-card-header>
-          <ion-card-content>
-              <ion-img (click)="onClickPhoto(i)" [src]="picture.base64"></ion-img>
-          </ion-card-content>
-        </ion-card>
+      <ion-col size="4" *ngFor="let picture of pictures.reverse(); let i=index">
+        <div>
+          <ion-thumbnail>
+            <ion-img (click)="onClickPhoto(pictures.length - i - 1)" [src]="picture.base64"></ion-img>
+          </ion-thumbnail>
+          <ion-icon *ngIf="!picture.sent" class="icon icon-not-sent" src="/assets/icons/cloud_upload-24px.svg"></ion-icon>
+          <ion-icon *ngIf="picture.sent" class="icon icon-sent" src="/assets/icons/cloud_done-24px.svg"></ion-icon>
+        </div>
       </ion-col>
     </ion-row>
   </ion-grid>

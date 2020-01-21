@@ -1,0 +1,23 @@
+ion-footer {
+    height: 100px;
+}
+ion-header {
+    height: 50px;
+}
+ion-thumbnail
+{
+    min-width: 40px;
+    min-height: 40px;
+}
+.icon
+{
+    border: 1px solid;
+}
+.icon-sent
+{
+    border-color: green;
+}
+.icon-not-sent
+{
+    border-color: red;
+}

@@ -1,9 +1,38 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>camera</ion-title>
+    <ion-buttons slot="start">
+      <ion-button slot="start" (click)="onBackMenuButton()"><ion-icon src="/assets/icons/arrow_back-24px.svg"></ion-icon></ion-button>
+    </ion-buttons>
+    <ion-title>CAMERA</ion-title>
   </ion-toolbar>
 </ion-header>
-
 <ion-content>
 
 </ion-content>
+<ion-footer>
+  <ion-grid>
+    <ion-row>
+      <ion-col size="3">
+        <ion-button color="dark" shape="round" (click)="onTakePicture()"><ion-icon slot="icon-only" src="/assets/icons/camera-24px.svg"></ion-icon></ion-button>
+      </ion-col>
+      <ion-col size="3">
+        <ion-button color="dark" shape="round" (click)="onFocusCamera()"><ion-icon slot="icon-only" src="/assets/icons/center_focus_strong-24px.svg"></ion-icon></ion-button>
+      </ion-col>
+      <ion-col size="3">
+        <ion-button color="dark" shape="round" (click)="onSetFlashMode()"><ion-icon slot="icon-only" [src]="'/assets/icons/' + getFlashIcon()"></ion-icon></ion-button>
+      </ion-col>
+      <ion-col size="3">
+        <ion-button color="dark" shape="round" (click)="onSwitchCamera()"><ion-icon slot="icon-only" src="/assets/icons/flip_camera_android-24px.svg"></ion-icon></ion-button>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ligne">
+      <ion-col *ngFor="let picture of pictures.reverse().slice(0,4)">
+        <div>
+          <ion-thumbnail>
+            <ion-img [src]="picture.base64"></ion-img>
+          </ion-thumbnail>
+        </div>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-footer>
